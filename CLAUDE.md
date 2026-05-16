@@ -115,8 +115,23 @@ Modal `#palette-modal` — nome + lista de color pickers. Salvas em `customPalet
 | `mergePaletteIntoStored` com load do storage | Único jeito de acumular paletas diferentes em canais diferentes sem sobrescrever |
 | `collectFolderColors()` só no "Salvar cores" | Lê só canais marcados → zeraria canais desmarcados se chamado após paleta |
 
+## Bug conhecido — subpastas não coloridas (pendente)
+
+**Sintoma:** ao aplicar paleta (clique ou drag/drop) em uma pasta que tem subpastas, as subpastas não ficam coloridas visualmente, mesmo que `getAllFoldersFlat` retorne todas elas corretamente.
+
+**Causa provável:** subpastas nunca configuradas têm checkboxes desmarcados por default (`cb.checked = Boolean(null) = false`). `mergePaletteIntoStored` só atualiza canais com checkbox marcado → nenhum canal atualizado → nada colorido. O código está correto pela lógica, mas o fluxo UX está quebrado para pastas virgens.
+
+**O que já foi tentado e revertido:**
+- Chamar `renderFolderTree` após paleta → resetava checkboxes, apagava stroke
+- Chamar `expandRows(allFolders)` → expandia TUDO recursivamente, inutilizável
+- Preservar `prev.icon` do storage quando desmarcado → reconhecia valor antigo como "ativo"
+
+**Solução esperada (não implementada):**
+Quando `mergePaletteIntoStored` processa uma subpasta sem nenhuma configuração prévia (entry inexistente no storage E sem nenhum checkbox marcado), aplicar a cor de paleta nos canais icon + text E marcar os checkboxes correspondentes. Ou seja: para pastas virgens, o drop/clique de paleta age como "primeira configuração" (enable + colorir). Para pastas já configuradas, respeitar os checkboxes como está hoje.
+
+**Arquivos a mexer:** `mergePaletteIntoStored` em `options.js` (~linha 532).
+
 ## O que ainda pode ser melhorado (não implementado)
 
-- Drag/drop de paleta em subpastas não coloridas (checkboxes desmarcados por default) → usuário precisa usar "Todas: Ícone" antes
-- Não há persistência do estado de acordeão entre sessões (fecha tudo ao reabrir)
-- Não há preview do CSS inline (só na seção "CSS gerado")
+- Persistência do estado de acordeão entre sessões (fecha tudo ao reabrir)
+- Preview do CSS inline (só na seção "CSS gerado")
