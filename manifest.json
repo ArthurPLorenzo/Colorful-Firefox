@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "Colorful Bookmarks",
+  "version": "3.0.0",
+  "description": "Personalize a cor das pastas de favoritos na barra de favoritos do Firefox",
+
+  "permissions": [
+    "bookmarks",
+    "storage"
+  ],
+
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+
+  "action": {
+    "default_title": "Colorful Bookmarks — Abrir opções"
+  },
+
+  "background": {
+    "scripts": ["background.js"]
+  }
+}

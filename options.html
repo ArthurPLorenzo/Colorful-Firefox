@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Colorful Bookmarks</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #1c1b22;
+      --surface: #2b2a33;
+      --border:  #42414d;
+      --text:    #fbfbfe;
+      --muted:   #9f9fad;
+      --accent:  #0060df;
+      --success: #2ac3a2;
+      --danger:  #e05252;
+      --radius:  8px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      padding: 28px 24px 56px;
+      max-width: 820px;
+      margin: 0 auto;
+    }
+
+    /* ── Header ──────────────────────────────────────────── */
+    .page-header { margin-bottom: 24px; }
+    .page-header h1 { font-size: 20px; font-weight: 700; margin-bottom: 3px; }
+    .page-header p  { color: var(--muted); font-size: 13px; }
+
+    /* ── Cards ────────────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 22px;
+      margin-bottom: 16px;
+    }
+    .card-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+
+    /* ── Steps ────────────────────────────────────────────── */
+    .steps { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .steps li { display: flex; gap: 12px; align-items: flex-start; color: #cfcfd8; }
+    .step-num {
+      flex-shrink: 0; width: 20px; height: 20px; background: var(--accent); color: #fff;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 700; margin-top: 2px;
+    }
+    code {
+      background: #1e1e2e; border: 1px solid var(--border); border-radius: 4px;
+      padding: 1px 6px; font-family: "Cascadia Code","Fira Code","Consolas",monospace;
+      font-size: 11.5px; color: #74c0fc;
+    }
+
+    /* ── Palette section ─────────────────────────────────── */
+    .palette-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+
+    .palette-btn {
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      padding: 10px 14px; background: var(--bg);
+      border: 2px solid var(--border); border-radius: var(--radius);
+      cursor: pointer; transition: border-color 0.15s; min-width: 80px;
+      position: relative;
+    }
+    .palette-btn:hover { border-color: var(--accent); }
+
+    .palette-swatches { display: flex; gap: 3px; }
+    .palette-swatch { width: 13px; height: 13px; border-radius: 50%; flex-shrink: 0; }
+    .palette-label { font-size: 11px; color: var(--muted); font-weight: 600; }
+
+    .palette-del {
+      position: absolute; top: 3px; right: 5px; background: none; border: none;
+      color: var(--muted); font-size: 13px; cursor: pointer; line-height: 1;
+      padding: 0 2px;
+    }
+    .palette-del:hover { color: var(--danger); }
+
+    /* ── Folder list ──────────────────────────────────────── */
+    #folder-list { display: flex; flex-direction: column; gap: 1px; }
+
+    .section-header {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.1em; color: var(--muted);
+      padding: 10px 8px 4px; margin-top: 4px;
+      border-top: 1px solid var(--border);
+    }
+    .section-header:first-child { border-top: none; margin-top: 0; padding-top: 2px; }
+
+    .folder-row {
+      display: flex; align-items: center; gap: 7px;
+      padding: 5px 8px; border-radius: 6px; min-height: 34px;
+    }
+    .folder-row:hover { background: rgba(255,255,255,0.04); }
+
+    .toggle-btn {
+      width: 16px; height: 16px; background: none; border: none;
+      color: var(--muted); cursor: pointer; font-size: 9px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 3px; flex-shrink: 0; padding: 0; line-height: 1;
+    }
+    .toggle-btn:hover { background: var(--border); color: var(--text); }
+    .toggle-btn.leaf { cursor: default; visibility: hidden; }
+
+    .folder-icon { font-size: 13px; flex-shrink: 0; }
+
+    .folder-name {
+      flex: 1; font-size: 13px; white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis; min-width: 0;
+    }
+
+    .children-container { display: none; padding-left: 22px; }
+    .children-container.open { display: flex; flex-direction: column; gap: 1px; }
+
+    /* ── Dual color groups ───────────────────────────────── */
+    .color-group {
+      display: flex; align-items: center; gap: 4px;
+      flex-shrink: 0; white-space: nowrap;
+    }
+    .color-group-label {
+      font-size: 10px; color: var(--muted); width: 26px; text-align: right; flex-shrink: 0;
+    }
+    .enable-check { width: 13px; height: 13px; cursor: pointer; accent-color: var(--accent); }
+
+    .color-pick {
+      width: 32px; height: 24px; border: 2px solid var(--border);
+      border-radius: 4px; cursor: pointer; background: none; padding: 1px;
+    }
+    .color-pick:disabled { opacity: 0.28; cursor: default; }
+    .color-pick::-webkit-color-swatch-wrapper { padding: 0; }
+    .color-pick::-webkit-color-swatch { border: none; border-radius: 2px; }
+
+    .color-sep { width: 1px; height: 20px; background: var(--border); margin: 0 2px; }
+
+    .stroke-width-sel {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
+      color: var(--text); font-size: 11px; padding: 1px 4px;
+      cursor: pointer; height: 24px;
+    }
+    .stroke-width-sel:disabled { opacity: 0.28; cursor: default; }
+
+    /* ── Buttons ──────────────────────────────────────────── */
+    .btn-row { display: flex; gap: 8px; margin-top: 14px; align-items: center; }
+    .btn {
+      padding: 8px 16px; border: none; border-radius: 6px;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      transition: filter 0.1s;
+    }
+    .btn:hover  { filter: brightness(1.1); }
+    .btn:active { filter: brightness(0.88); }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-ghost   { background: var(--border); color: var(--text); }
+    .btn-danger  { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+
+    .feedback { font-size: 12px; margin-left: auto; opacity: 0; transition: opacity 0.3s; }
+    .feedback.show { opacity: 1; }
+
+    /* ── CSS output ───────────────────────────────────────── */
+    #css-section { margin-top: 14px; display: none; }
+    textarea {
+      width: 100%; height: 220px; background: #1e1e2e; border: 1px solid var(--border);
+      border-radius: 6px; color: #74c0fc;
+      font-family: "Cascadia Code","Fira Code","Consolas",monospace;
+      font-size: 11.5px; line-height: 1.6; padding: 12px; resize: vertical; outline: none;
+    }
+    textarea:focus { border-color: var(--accent); }
+    #copy-feedback { font-size: 12px; color: var(--success); margin-top: 6px; min-height: 18px; }
+
+    .empty-state { text-align: center; padding: 20px; color: var(--muted); font-size: 13px; }
+
+    /* ── Drag & drop ──────────────────────────────────────── */
+    .palette-btn[draggable="true"] { cursor: grab; }
+    .palette-btn[draggable="true"]:active { cursor: grabbing; }
+
+    .folder-row.drag-over {
+      background: rgba(0,96,223,0.18) !important;
+      outline: 1px solid var(--accent);
+    }
+
+    @keyframes dropFlash {
+      0%   { background: rgba(42,195,162,0.35); }
+      100% { background: transparent; }
+    }
+    .folder-row.drop-flash { animation: dropFlash 0.65s ease-out forwards; }
+
+    /* ── Modal ────────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.72);
+      display: none; align-items: center; justify-content: center; z-index: 999;
+    }
+    .modal-overlay.open { display: flex; }
+
+    .modal-box {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 24px; width: 420px;
+      max-height: 85vh; overflow-y: auto;
+    }
+    .modal-box h3 { font-size: 15px; font-weight: 700; margin-bottom: 16px; }
+
+    .form-group { margin-bottom: 14px; }
+    .form-group > label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+    .form-group input[type="text"] {
+      width: 100%; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 5px; color: var(--text); font-size: 13px; padding: 7px 10px; outline: none;
+    }
+    .form-group input[type="text"]:focus { border-color: var(--accent); }
+
+    .palette-colors-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+    .palette-color-item { display: flex; align-items: center; gap: 4px; }
+    .palette-color-item input[type="color"] {
+      width: 34px; height: 28px; border: 2px solid var(--border);
+      border-radius: 4px; cursor: pointer; background: none; padding: 1px;
+    }
+    .palette-color-item input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+    .palette-color-item input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
+    .rm-color { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; }
+    .rm-color:hover { color: var(--danger); }
+
+    .modal-actions { display: flex; gap: 8px; margin-top: 18px; justify-content: flex-end; }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <h1>🎨 Colorful Bookmarks</h1>
+    <p>Gera CSS para colorir pastas via userChrome.css</p>
+  </div>
+
+  <!-- ── Instructions ──────────────────────────────────── -->
+  <div class="card">
+    <div class="card-title">Como aplicar</div>
+    <ol class="steps">
+      <li><span class="step-num">1</span><span>Configure as cores abaixo → <strong>Salvar cores</strong> → <strong>Gerar CSS</strong></span></li>
+      <li><span class="step-num">2</span><span><code>about:config</code> → ativar <code>toolkit.legacyUserProfileCustomizations.stylesheets</code> = <strong>true</strong></span></li>
+      <li><span class="step-num">3</span><span><code>about:support</code> → <strong>Pasta do perfil</strong> → <strong>Abrir pasta</strong></span></li>
+      <li><span class="step-num">4</span><span>Criar <code>chrome/userChrome.css</code> → colar o CSS gerado → reiniciar Firefox</span></li>
+    </ol>
+  </div>
+
+  <!-- ── Palettes ───────────────────────────────────────── -->
+  <div class="card">
+    <div class="card-title">Paletas de cores</div>
+    <div class="palette-row" id="palette-row"></div>
+    <button class="btn btn-ghost" id="create-palette-btn" style="font-size:12px;padding:6px 12px;">+ Criar paleta personalizada</button>
+  </div>
+
+  <!-- ── Folder list ────────────────────────────────────── -->
+  <div class="card">
+    <div class="card-title">Pastas de favoritos</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:10px;">
+      Ícone: cor do símbolo da pasta &nbsp;·&nbsp; Texto: cor do nome
+    </p>
+    <div id="global-controls" style="display:none; align-items:center; gap:16px; padding:4px 8px 10px; border-bottom:1px solid var(--border); margin-bottom:4px;">
+      <span style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); white-space:nowrap;">Todas:</span>
+      <label style="display:flex; align-items:center; gap:5px; font-size:12px; color:var(--muted); cursor:pointer; white-space:nowrap;">
+        <input type="checkbox" id="global-icon-cb" style="width:13px; height:13px; accent-color:var(--accent); cursor:pointer;"> Ícone
+      </label>
+      <label style="display:flex; align-items:center; gap:5px; font-size:12px; color:var(--muted); cursor:pointer; white-space:nowrap;">
+        <input type="checkbox" id="global-text-cb" style="width:13px; height:13px; accent-color:var(--accent); cursor:pointer;"> Texto
+      </label>
+      <label style="display:flex; align-items:center; gap:5px; font-size:12px; color:var(--muted); cursor:pointer; white-space:nowrap;">
+        <input type="checkbox" id="global-stroke-cb" style="width:13px; height:13px; accent-color:var(--accent); cursor:pointer;"> Borda
+      </label>
+    </div>
+    <div id="folder-list">
+      <div class="empty-state">Iniciando [1/4]: Script carregado…</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="save-btn">Salvar cores</button>
+      <button class="btn btn-danger"  id="reset-btn">Limpar tudo</button>
+      <span class="feedback" id="save-feedback"></span>
+    </div>
+  </div>
+
+  <!-- ── CSS output ────────────────────────────────────── -->
+  <div class="card">
+    <div class="card-title">CSS gerado</div>
+    <p style="color:var(--muted);font-size:12px;margin-bottom:12px;">
+      Após salvar as cores, clique em <strong>Gerar CSS</strong> e cole o resultado em <code>chrome/userChrome.css</code>.
+    </p>
+    <button class="btn btn-primary" id="generate-btn">Gerar CSS</button>
+    <div id="css-section">
+      <textarea id="css-output" readonly spellcheck="false"></textarea>
+      <div class="btn-row" style="margin-top:10px;">
+        <button class="btn btn-ghost" id="copy-btn">Copiar CSS</button>
+      </div>
+      <div id="copy-feedback"></div>
+    </div>
+  </div>
+
+  <!-- ── Custom palette modal ───────────────────────────── -->
+  <div class="modal-overlay" id="palette-modal">
+    <div class="modal-box">
+      <h3>Nova paleta personalizada</h3>
+      <div class="form-group">
+        <label for="new-palette-name">Nome</label>
+        <input type="text" id="new-palette-name" placeholder="Ex: Minha Paleta" maxlength="32">
+      </div>
+      <div class="form-group">
+        <label>Cores</label>
+        <div class="palette-colors-grid" id="new-palette-colors"></div>
+        <button class="btn btn-ghost" id="add-palette-color" style="font-size:12px;padding:5px 10px;">+ Adicionar cor</button>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost"    id="cancel-palette-modal">Cancelar</button>
+        <button class="btn btn-primary"  id="save-custom-palette">Salvar paleta</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>
